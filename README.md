@@ -1,5 +1,30 @@
 # Autos Colombia
+## Cómo correr el proyecto
 
+Requisitos: Python 3.13 y Node.js 24.
+
+**Terminal 1 (backend):**
+
+```
+cd backend
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
+
+La API queda en http://127.0.0.1:8000 (prueba en /health).
+
+**Terminal 2 (frontend):**
+
+```
+cd frontend
+npm install
+npm start -- --proxy-config proxy.conf.json
+```
+
+La aplicación queda en http://localhost:4200
+
+Nota: las pantallas que cargan datos necesitan PostgreSQL configurado en `backend/.env`, que se hará en una entrega posterior.
 ## Pantalla Control de acceso
 
 Disponible en **Control de acceso** en la navegación y en
