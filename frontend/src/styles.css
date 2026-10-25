@@ -1,16 +1,43 @@
+:root {
+  --blue-900: #0f2f57;
+  --blue-800: #153a6b;
+  --blue-700: #1e4d8c;
+  --blue-600: #2563b0;
+  --blue-500: #3b82c4;
+  --blue-200: #c3d7ef;
+  --blue-100: #e1ebf8;
+  --blue-50: #f3f7fc;
+  --ink: #14233a;
+  --muted: #52647c;
+  --line: #dbe3ee;
+  --line-strong: #c3d0e2;
+  --shadow-sm: 0 1px 2px rgba(16, 42, 86, 0.06);
+  --shadow-md: 0 1px 2px rgba(16, 42, 86, 0.05), 0 10px 28px rgba(16, 42, 86, 0.08);
+  --radius: 14px;
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  background: #f6f7f4;
-  color: #203a33;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  background:
+    linear-gradient(180deg, #e6eef9 0, #f4f7fb 340px) no-repeat,
+    #f4f7fb;
+  color: var(--ink);
+  font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto, Arial,
+    sans-serif;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
+::selection {
+  background: var(--blue-200);
+}
+
 a:focus-visible {
-  outline: 3px solid #94610e;
-  outline-offset: 6px;
+  outline: 3px solid var(--blue-500);
+  outline-offset: 4px;
+  border-radius: 8px;
 }
