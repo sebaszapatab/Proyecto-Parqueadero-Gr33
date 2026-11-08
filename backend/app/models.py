@@ -1,8 +1,9 @@
 """Modelos iniciales. Importar este módulo no crea tablas ni abre conexiones."""
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
+from decimal import Decimal
 
-from sqlalchemy import BigInteger, CheckConstraint, DateTime, ForeignKey, Identity, Index, Integer, Text, UniqueConstraint, func, text
+from sqlalchemy import BigInteger, Boolean, CheckConstraint, Date, DateTime, Numeric, true, ForeignKey, Identity, Index, Integer, Text, UniqueConstraint, func, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, validates
 
 
@@ -140,3 +141,111 @@ class Estancia(Base):
         self.salida = fecha_salida
         self.operador_salida = operador
         self.operador_salida_id = operador.id
+
+
+ROLES = ("operador", "administrador", "desarrollador")
+TIPOS_VEHICULO = ("MOTO", "AUTOMOVIL", "CAMIONETA")
+
+
+class Usuario(Base):
+    """Persona que inicia sesión en el sistema, con un rol."""
+    __tablename__ = "usuario"
+    __table_args__ = (
+        UniqueConstraint("usuario", name="uq_usuario_usuario"),
+        CheckConstraint("usuario ~ '^[a-z0-9._-]{3,30}$'", name="ck_usuario_formato"),
+        CheckConstraint("nombre ~ '[^[:space:]]'", name="ck_usuario_nombre_no_vacio"),
+        CheckConstraint("rol IN ('operador', 'administrador', 'desarrollador')", name="ck_usuario_rol"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    nombre: Mapped[str] = mapped_column(Text, nullable=False)
+    usuario: Mapped[str] = mapped_column(Text, nullable=False)
+    clave_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    rol: Mapped[str] = mapped_column(Text, nullable=False)
+    activo: Mapped[bool] = mapped_column(Boolean, server_default=true(), nullable=False)
+    creado: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    @validates("nombre")
+    def validate_nombre(self, key: str, value: str) -> str:
+        return required_text(value, key)
+
+    @validates("usuario")
+    def validate_usuario(self, key: str, value: str) -> str:
+        return required_text(value, key).lower()
+
+    @validates("rol")
+    def validate_rol(self, key: str, value: str) -> str:
+        if value not in ROLES:
+            raise ValueError("rol no válido.")
+        return value
+
+
+class Sesion(Base):
+    """Sesión abierta; solo se guarda el hash del token."""
+    __tablename__ = "sesion"
+    __table_args__ = (
+        UniqueConstraint("token_hash", name="uq_sesion_token_hash"),
+        Index("ix_sesion_usuario", "usuario_id"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    usuario_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("usuario.id", name="fk_sesion_usuario", ondelete="CASCADE"), nullable=False
+    )
+    token_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    creada: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    ultima_actividad: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    usuario: Mapped[Usuario] = relationship()
+
+
+class Tarifa(Base):
+    """Mensualidad vigente por tipo de vehículo."""
+    __tablename__ = "tarifa"
+    __table_args__ = (
+        UniqueConstraint("tipo", name="uq_tarifa_tipo"),
+        CheckConstraint("tipo IN ('MOTO', 'AUTOMOVIL', 'CAMIONETA')", name="ck_tarifa_tipo"),
+        CheckConstraint("valor > 0", name="ck_tarifa_valor_positivo"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    tipo: Mapped[str] = mapped_column(Text, nullable=False)
+    valor: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+
+
+class Pago(Base):
+    """Pago de una mensualidad; extiende el vencimiento del vehículo un mes."""
+    __tablename__ = "pago"
+    __table_args__ = (
+        CheckConstraint("monto > 0", name="ck_pago_monto_positivo"),
+        CheckConstraint("hasta > desde", name="ck_pago_periodo"),
+        CheckConstraint(
+            "(anulado = false AND motivo_anulacion IS NULL AND anulado_por_id IS NULL AND anulado_en IS NULL)"
+            " OR (anulado = true AND motivo_anulacion ~ '[^[:space:]]' AND anulado_por_id IS NOT NULL AND anulado_en IS NOT NULL)",
+            name="ck_pago_anulacion_completa",
+        ),
+        Index("ix_pago_vehiculo", "vehiculo_id", "hasta"),
+        Index("ix_pago_creado", "creado"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    vehiculo_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("vehiculo.id", name="fk_pago_vehiculo", ondelete="RESTRICT"), nullable=False
+    )
+    monto: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    desde: Mapped[date] = mapped_column(Date, nullable=False)
+    hasta: Mapped[date] = mapped_column(Date, nullable=False)
+    registrado_por_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("usuario.id", name="fk_pago_registrado_por", ondelete="RESTRICT"), nullable=False
+    )
+    creado: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    anulado: Mapped[bool] = mapped_column(Boolean, server_default=text("false"), nullable=False)
+    motivo_anulacion: Mapped[str | None] = mapped_column(Text, nullable=True)
+    anulado_por_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("usuario.id", name="fk_pago_anulado_por", ondelete="RESTRICT"), nullable=True
+    )
+    anulado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    vehiculo: Mapped[Vehiculo] = relationship()
+    registrado_por: Mapped[Usuario] = relationship(foreign_keys=[registrado_por_id])
+    anulado_por: Mapped[Usuario | None] = relationship(foreign_keys=[anulado_por_id])

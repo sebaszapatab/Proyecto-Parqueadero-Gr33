@@ -5,9 +5,11 @@
       <h1 id="cells-title">Celdas</h1>
       <p>Administra los espacios de Autos Colombia.</p>
     </div>
+    @if (auth.esAdmin()) {
     <button class="primary" type="button" (click)="newCell()" [disabled]="busy()">
       Nueva celda
     </button>
+    }
   </header>
   @if (success()) {
     <p class="notice success" role="status">{{ success() }}</p>
@@ -94,7 +96,9 @@
             <tr>
               <th scope="col">Código</th>
               <th scope="col">Tipo</th>
-              <th scope="col">Acciones</th>
+              @if (auth.esAdmin()) {
+<th scope="col">Acciones</th>
+}
             </tr>
           </thead>
           <tbody>
@@ -102,6 +106,7 @@
               <tr>
                 <th scope="row">{{ cell.codigo }}</th>
                 <td>{{ cell.tipo }}</td>
+                @if (auth.esAdmin()) {
                 <td class="row-actions">
                   <button
                     type="button"
@@ -120,6 +125,7 @@
                     Eliminar
                   </button>
                 </td>
+                }
               </tr>
             }
           </tbody>

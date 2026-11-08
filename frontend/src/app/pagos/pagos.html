@@ -1,0 +1,183 @@
+<section class="management" aria-labelledby="pay-title">
+  <header class="heading">
+    <div>
+      <span class="eyebrow">GESTIÓN DE PAGOS</span>
+      <h1 id="pay-title">Pagos</h1>
+      <p>Mensualidad por vehículo. Cada pago extiende el vencimiento un mes.</p>
+    </div>
+  </header>
+  @if (success()) {
+    <p class="notice success" role="status">{{ success() }}</p>
+  }
+  @if (error()) {
+    <p class="notice error" role="alert">{{ error() }}</p>
+  }
+
+  @if (auth.esAdmin()) {
+  <section class="panel" aria-labelledby="tar-title">
+    <h2 id="tar-title">Tarifa mensual por tipo de vehículo</h2>
+    <div class="form-grid tarifas">
+      @for (t of tarifas(); track t.tipo) {
+        <div class="field">
+          <label [for]="'tarifa-' + t.tipo">{{ t.tipo }} · actual {{ moneda(t.valor) }}</label>
+          <div class="inline">
+            <input [id]="'tarifa-' + t.tipo" type="number" min="1" step="1000" [formControl]="valores.controls[t.tipo]" />
+            <button type="button" (click)="guardarTarifa(t.tipo)" [disabled]="busy()">Guardar</button>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+  }
+
+  <section class="panel" aria-labelledby="cobro-title">
+    <h2 id="cobro-title">Registrar pago</h2>
+    <form [formGroup]="cobro" (ngSubmit)="consultar()" novalidate>
+      <div class="field">
+        <label for="cobro-placa">Placa del vehículo</label>
+        <div class="inline">
+          <input id="cobro-placa" type="text" formControlName="placa" />
+          <button type="submit" [disabled]="busy()">Consultar estado</button>
+        </div>
+        <span class="field-error">
+          @if (cobro.controls.placa.touched && cobro.controls.placa.invalid) {
+            La placa es obligatoria.
+          }
+        </span>
+      </div>
+    </form>
+    @if (estado(); as e) {
+      <div class="notice" [class.error]="e.estado === 'vencida'" [class.success]="e.estado === 'vigente'" role="status">
+        <strong>{{ e.placa }} · {{ e.tipo }} · {{ etiquetaEstado(e.estado) }}</strong>
+        <p>
+          @if (e.vence) {
+            Vence el {{ fecha(e.vence) }}.
+          } @else {
+            Este vehículo aún no tiene pagos registrados.
+          }
+          Mensualidad: {{ moneda(e.valor_mensualidad) }}.
+        </p>
+        <button type="button" class="primary" (click)="cobrar()" [disabled]="busy() || e.valor_mensualidad === null">
+          {{ busy() ? 'Registrando…' : 'Registrar pago de ' + moneda(e.valor_mensualidad) }}
+        </button>
+      </div>
+    }
+    @if (comprobante(); as c) {
+      <article class="receipt" aria-label="Comprobante de pago">
+        <h3>Comprobante de pago #{{ c.id }}{{ c.anulado ? ' · ANULADO' : '' }}</h3>
+        <dl>
+          <dt>Vehículo</dt><dd>{{ c.placa }} · {{ c.marca }} · {{ c.tipo }}</dd>
+          <dt>Valor</dt><dd>{{ moneda(c.monto) }}</dd>
+          <dt>Periodo</dt><dd>{{ fecha(c.desde) }} al {{ fecha(c.hasta) }}</dd>
+          <dt>Fecha de pago</dt><dd>{{ fechaHora(c.creado) }} (Bogotá)</dd>
+          <dt>Registrado por</dt><dd>{{ c.registrado_por }}</dd>
+          @if (c.anulado) {
+            <dt>Anulado por</dt><dd>{{ c.anulado_por }} · {{ c.motivo_anulacion }}</dd>
+          }
+        </dl>
+        <button type="button" (click)="imprimir()">Imprimir comprobante</button>
+      </article>
+    }
+  </section>
+
+  @if (anulando(); as p) {
+    <section class="panel confirmation" role="alertdialog" aria-labelledby="anular-title">
+      <h2 id="anular-title">Anular pago #{{ p.id }} de {{ p.placa }}</h2>
+      <p>Indica el motivo. El pago quedará anulado y el vencimiento volverá al estado anterior.</p>
+      <div class="field">
+        <label for="motivo">Motivo de la anulación</label>
+        <input id="motivo" type="text" maxlength="300" [formControl]="motivo" />
+        <span class="field-error">
+          @if (motivo.touched && motivo.invalid) {
+            El motivo es obligatorio.
+          }
+        </span>
+      </div>
+      <div class="actions">
+        <button type="button" (click)="anulando.set(null)" [disabled]="busy()">Cancelar</button
+        ><button type="button" class="danger" (click)="confirmarAnular()" [disabled]="busy()">Confirmar anulación</button>
+      </div>
+    </section>
+  }
+
+  <section class="panel list" aria-labelledby="venc-title">
+    <div class="list-heading">
+      <h2 id="venc-title">Mensualidades vencidas o sin pago <span class="count">{{ vencidos()?.total ?? 0 }}</span></h2>
+      <button type="button" (click)="cargarVencidos()">Actualizar</button>
+    </div>
+    @if (vencidos(); as v) {
+      @if (!v.items.length) {
+        <p class="empty">Todos los vehículos están al día.</p>
+      } @else {
+        <div class="table-scroll">
+          <table>
+            <caption class="sr-only">Vehículos con mensualidad vencida</caption>
+            <thead><tr><th scope="col">Placa</th><th scope="col">Tipo</th><th scope="col">Estado</th><th scope="col">Venció</th></tr></thead>
+            <tbody>
+              @for (i of v.items; track i.placa) {
+                <tr>
+                  <th scope="row">{{ i.placa }}</th>
+                  <td>{{ i.tipo }}</td>
+                  <td>{{ etiquetaEstado(i.estado) }}</td>
+                  <td>{{ i.vence ? fecha(i.vence) : '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </section>
+
+  @if (auth.esAdmin()) {
+  <section class="panel list" aria-labelledby="rep-title">
+    <div class="list-heading">
+      <h2 id="rep-title">Reporte de pagos <span class="count">{{ total() }}</span></h2>
+    </div>
+    <form [formGroup]="filtro" (ngSubmit)="cargarPagos(0)" class="filters">
+      <div class="field"><label for="f-desde">Desde</label><input id="f-desde" type="date" formControlName="desde" /></div>
+      <div class="field"><label for="f-hasta">Hasta</label><input id="f-hasta" type="date" formControlName="hasta" /></div>
+      <div class="field"><label for="f-placa">Placa</label><input id="f-placa" type="text" formControlName="placa" /></div>
+      <button type="submit">Filtrar</button>
+    </form>
+    <p class="hint">Total recaudado (sin pagos anulados): <strong>{{ moneda(recaudado()) }}</strong></p>
+    @if (!pagos().length) {
+      <p class="empty">No hay pagos para este filtro.</p>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <caption class="sr-only">Pagos registrados</caption>
+          <thead>
+            <tr><th scope="col">N.º</th><th scope="col">Placa</th><th scope="col">Valor</th><th scope="col">Periodo</th><th scope="col">Fecha</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr>
+          </thead>
+          <tbody>
+            @for (p of pagos(); track p.id) {
+              <tr>
+                <th scope="row">{{ p.id }}</th>
+                <td>{{ p.placa }}</td>
+                <td>{{ moneda(p.monto) }}</td>
+                <td>{{ fecha(p.desde) }} – {{ fecha(p.hasta) }}</td>
+                <td>{{ fechaHora(p.creado) }}</td>
+                <td>{{ p.anulado ? 'Anulado' : 'Vigente' }}</td>
+                <td class="row-actions">
+                  <button type="button" (click)="verComprobante(p)">Comprobante</button>
+                  @if (!p.anulado) {
+                    <button type="button" class="delete-link" (click)="pedirAnular(p)" [disabled]="busy()">Anular</button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    <nav class="pagination" aria-label="Paginación de pagos">
+      <span>Página {{ page() }} de {{ pages() }} · {{ limit }} por página</span>
+      <div class="actions">
+        <button type="button" (click)="cargarPagos(offset() - limit)" [disabled]="offset() === 0">Anterior</button
+        ><button type="button" (click)="cargarPagos(offset() + limit)" [disabled]="offset() + limit >= total()">Siguiente</button>
+      </div>
+    </nav>
+  </section>
+  }
+</section>

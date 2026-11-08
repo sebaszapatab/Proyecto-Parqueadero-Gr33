@@ -1,10 +1,10 @@
 from functools import wraps
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from app.models import Celda
+from app.models import Celda, Estancia, Vehiculo
 from app.schemas.celda import CeldaActualizar, CeldaCrear
 
 
@@ -82,3 +82,19 @@ def delete_cell(session: Session, cell_id: int) -> None:
     session.commit()
 
 
+@database_operation
+def cells_occupancy(session: Session) -> dict:
+    """Todas las celdas con la placa del vehículo que tienen dentro, si lo hay."""
+    rows = session.execute(
+        select(Celda.id, Celda.codigo, Celda.tipo, Vehiculo.placa)
+        .select_from(Celda)
+        .outerjoin(Estancia, and_(Estancia.celda_id == Celda.id, Estancia.salida.is_(None)))
+        .outerjoin(Vehiculo, Vehiculo.id == Estancia.vehiculo_id)
+        .order_by(Celda.id)
+    ).all()
+    items = [
+        {"id": row.id, "codigo": row.codigo, "tipo": row.tipo, "placa": row.placa}
+        for row in rows
+    ]
+    occupied = sum(1 for item in items if item["placa"] is not None)
+    return {"items": items, "total": len(items), "ocupadas": occupied, "libres": len(items) - occupied}

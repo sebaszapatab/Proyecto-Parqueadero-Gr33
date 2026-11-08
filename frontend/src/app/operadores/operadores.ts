@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { AuthService } from '../services/auth.service';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValidatorFn } from '@angular/forms';
@@ -17,6 +18,7 @@ type Field = keyof OperadorCrear;
   styleUrl: './operadores.css',
 })
 export class Operadores {
+  readonly auth = inject(AuthService);
   private readonly api = inject(OperadoresService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);

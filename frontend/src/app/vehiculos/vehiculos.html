@@ -140,7 +140,9 @@
               <th scope="col">Año</th>
               <th scope="col">Color</th>
               <th scope="col">Tipo</th>
-              <th scope="col">Acciones</th>
+              @if (auth.esAdmin()) {
+<th scope="col">Acciones</th>
+}
             </tr>
           </thead>
           <tbody>
@@ -153,6 +155,7 @@
                 <td>
                   <span class="type-tag">{{ vehicle.tipo }}</span>
                 </td>
+                @if (auth.esAdmin()) {
                 <td class="row-actions">
                   <button
                     type="button"
@@ -171,6 +174,7 @@
                     Eliminar
                   </button>
                 </td>
+                }
               </tr>
             }
           </tbody>

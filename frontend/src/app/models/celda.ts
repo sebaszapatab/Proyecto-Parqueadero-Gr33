@@ -12,3 +12,15 @@ export interface CeldasPagina {
   offset: number;
   limit: number;
 }
+export interface CeldaOcupacion {
+  id: number;
+  codigo: string;
+  tipo: string;
+  placa: string | null;
+}
+export interface OcupacionCeldas {
+  items: CeldaOcupacion[];
+  total: number;
+  ocupadas: number;
+  libres: number;
+}

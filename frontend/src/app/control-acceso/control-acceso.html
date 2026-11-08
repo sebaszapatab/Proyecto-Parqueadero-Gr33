@@ -17,14 +17,14 @@
       <p role="alert" class="notice error">{{ catalogError() }}</p>
     }
     @if (!catalogLoading() && !catalogError()) {
-      <p>{{ celdas().length }} celdas · {{ operadores().length }} operadores.</p>
-      @if (!celdas().length || !operadores().length) {
-        <p>Registra celdas y operadores desde su gestión para poder seleccionarlos.</p>
+      <p>{{ celdasLibres().length }} celdas libres · {{ operadores().length }} operadores.</p>
+      @if (!operadores().length) {
+        <p>Registra operadores desde su gestión para poder seleccionarlos.</p>
       }
     }
     <p class="hint">
-      Las celdas listadas no indican disponibilidad. La ocupación se validará al registrar la
-      entrada.
+      Solo se ofrecen celdas libres. Escribe la placa y sal del campo: se mostrarán únicamente las
+      celdas del tipo del vehículo.
     </p>
   </section>
   <section class="panel" aria-labelledby="entry-title">
@@ -40,6 +40,7 @@
               formControlName="placa"
               type="text"
               aria-describedby="entry-plate-error"
+              (blur)="verificarPlaca()"
             />
             <span id="entry-plate-error" class="field-error">
               @if (entrada.controls.placa.touched && entrada.controls.placa.invalid) {
@@ -50,8 +51,8 @@
           <div class="field">
             <label for="entry-cell">Celda</label
             ><select id="entry-cell" formControlName="celda_id">
-              <option [ngValue]="null">Selecciona una celda</option>
-              @for (c of celdas(); track c.id) {
+              <option [ngValue]="null">Selecciona una celda libre</option>
+              @for (c of celdasLibres(); track c.id) {
                 <option [ngValue]="c.id">{{ c.codigo }} · {{ c.tipo }}</option>
               }
             </select>
@@ -79,6 +80,9 @@
         <button class="primary" type="submit">Registrar entrada</button>
       </fieldset>
     </form>
+    @if (avisoPago()) {
+      <p class="notice warning" role="status">{{ avisoPago() }}</p>
+    }
     @if (errorEntrada()) {
       <p class="notice error" role="alert">{{ errorEntrada() }}</p>
     }

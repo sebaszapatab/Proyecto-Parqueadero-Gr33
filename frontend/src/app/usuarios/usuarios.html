@@ -1,0 +1,123 @@
+<section class="management" aria-labelledby="users-title">
+  <header class="heading">
+    <div>
+      <span class="eyebrow">GESTIÓN DE USUARIOS</span>
+      <h1 id="users-title">Usuarios</h1>
+      <p>Crea usuarios del sistema y asigna su rol: operador, administrador o desarrollador.</p>
+    </div>
+    <button class="primary" type="button" (click)="nuevo()" [disabled]="busy()">
+      Nuevo usuario
+    </button>
+  </header>
+  @if (success()) {
+    <p class="notice success" role="status">{{ success() }}</p>
+  }
+  @if (actionError()) {
+    <p class="notice error" role="alert">{{ actionError() }}</p>
+  }
+  @if (showForm()) {
+    <section class="panel" aria-labelledby="form-title">
+      <h2 id="form-title">{{ editing() === null ? 'Crear usuario' : 'Editar usuario ' + editing()!.usuario }}</h2>
+      <p class="hint">
+        @if (editing() === null) {
+          Todos los campos son obligatorios. La contraseña debe tener al menos 8 caracteres.
+        } @else {
+          Deja la contraseña vacía para conservar la actual. Un usuario desactivado no puede iniciar sesión.
+        }
+      </p>
+      <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+        <fieldset [disabled]="busy()">
+          <legend class="sr-only">Datos del usuario</legend>
+          <div class="form-grid">
+            <div class="field">
+              <label for="nombre">Nombre completo</label>
+              <input id="nombre" type="text" formControlName="nombre" />
+              <span class="field-error">{{ fieldError('nombre') }}</span>
+            </div>
+            <div class="field">
+              <label for="usuario">Usuario</label>
+              <input id="usuario" type="text" formControlName="usuario" autocomplete="off" />
+              <span class="field-error">{{ fieldError('usuario') }}</span>
+            </div>
+            <div class="field">
+              <label for="clave">{{ editing() === null ? 'Contraseña' : 'Nueva contraseña (opcional)' }}</label>
+              <input id="clave" type="password" formControlName="clave" autocomplete="new-password" />
+              <span class="field-error">{{ fieldError('clave') }}</span>
+            </div>
+            <div class="field">
+              <label for="rol">Rol</label>
+              <select id="rol" formControlName="rol">
+                @for (r of roles; track r.value) {
+                  <option [value]="r.value">{{ r.label }}</option>
+                }
+              </select>
+            </div>
+            @if (editing() !== null) {
+              <div class="field">
+                <label for="activo">Estado</label>
+                <select id="activo" formControlName="activo">
+                  <option [ngValue]="true">Activo</option>
+                  <option [ngValue]="false">Desactivado</option>
+                </select>
+              </div>
+            }
+          </div>
+          <div class="actions">
+            <button type="submit" class="primary">{{ saving() ? 'Guardando…' : 'Guardar usuario' }}</button
+            ><button type="button" (click)="cancelar()">Cancelar</button>
+          </div>
+        </fieldset>
+      </form>
+    </section>
+  }
+  <section class="panel list" aria-label="Listado de usuarios" [attr.aria-busy]="loading()">
+    <div class="list-heading">
+      <h2>Usuarios registrados <span class="count">{{ total() }}</span></h2>
+      <button type="button" (click)="load()" [disabled]="busy()">Actualizar listado</button>
+    </div>
+    @if (loading()) {
+      <p class="empty" role="status">Cargando usuarios…</p>
+    } @else if (listError()) {
+      <p class="notice error" role="alert">{{ listError() }}</p>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <caption class="sr-only">Usuarios del sistema</caption>
+          <thead>
+            <tr>
+              <th scope="col">Nombre</th>
+              <th scope="col">Usuario</th>
+              <th scope="col">Rol</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of items(); track u.id) {
+              <tr>
+                <th scope="row">{{ u.nombre }}{{ esYo(u) ? ' (tú)' : '' }}</th>
+                <td>{{ u.usuario }}</td>
+                <td><span class="type-tag">{{ rolLabel(u.rol) }}</span></td>
+                <td>{{ u.activo ? 'Activo' : 'Desactivado' }}</td>
+                <td class="row-actions">
+                  <button type="button" (click)="editar(u)" [disabled]="busy()" [attr.aria-label]="'Editar ' + u.usuario">
+                    Editar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    <nav class="pagination" aria-label="Paginación de usuarios">
+      <span>Página {{ page() }} de {{ pages() }} · {{ limit }} por página</span>
+      <div class="actions">
+        <button type="button" (click)="load(offset() - limit)" [disabled]="busy() || offset() === 0">Anterior</button
+        ><button type="button" (click)="load(offset() + limit)" [disabled]="busy() || offset() + limit >= total()">
+          Siguiente
+        </button>
+      </div>
+    </nav>
+  </section>
+</section>

@@ -37,3 +37,19 @@ class CeldasPagina(BaseModel):
     total: int
     offset: int
     limit: int
+
+
+class CeldaOcupacion(BaseModel):
+    """Una celda con la placa del vehículo que la ocupa (None si está libre)."""
+
+    id: int
+    codigo: str
+    tipo: str
+    placa: str | None
+
+
+class OcupacionRespuesta(BaseModel):
+    items: list[CeldaOcupacion]
+    total: int
+    ocupadas: int
+    libres: int

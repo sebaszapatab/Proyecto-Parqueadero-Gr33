@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { EMPTY, Observable, expand, reduce, throwError, timeout } from 'rxjs';
-import { Celda } from '../models/celda';
+import { EMPTY, Observable, expand, map, reduce, throwError, timeout } from 'rxjs';
+import { CeldaOcupacion } from '../models/celda';
+import { EstadoPago } from '../models/pago';
 import { Operador } from '../models/operador';
 import { EntradaCrear, SalidaCrear, Estancia, EstadoVehiculo } from '../models/estancia';
 import { API_BASE_URL } from './api.service';
@@ -18,7 +19,9 @@ interface Pagina<T> {
 @Injectable({ providedIn: 'root' })
 export class EstanciasService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${inject(API_BASE_URL)}/estancias`;
+  private readonly raiz = inject(API_BASE_URL);
+  private readonly base = `${this.raiz}/estancias`;
+  private readonly pagos = `${this.raiz}/pagos`;
   private readonly cells = inject(CeldasService);
   private readonly operators = inject(OperadoresService);
 
@@ -33,8 +36,14 @@ export class EstanciasService {
       .get<EstadoVehiculo>(`${this.base}/vehiculo/${encodeURIComponent(placa)}`)
       .pipe(timeout(15000));
   }
-  celdas(): Observable<Celda[]> {
-    return this.todas((offset) => this.cells.list(offset, 100));
+  /** Todas las celdas con la placa que las ocupa (null si están libres). */
+  celdas(): Observable<CeldaOcupacion[]> {
+    return this.cells.occupancy().pipe(map((respuesta) => respuesta.items));
+  }
+  estadoPago(placa: string) {
+    return this.http
+      .get<EstadoPago>(`${this.pagos}/estado/${encodeURIComponent(placa)}`)
+      .pipe(timeout(15000));
   }
   operadores(): Observable<Operador[]> {
     return this.todas((offset) => this.operators.list(offset, 100));

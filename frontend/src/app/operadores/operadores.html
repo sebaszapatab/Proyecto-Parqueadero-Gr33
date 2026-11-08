@@ -5,9 +5,11 @@
       <h1 id="operators-title">Operadores</h1>
       <p>Administra los operadores de Autos Colombia.</p>
     </div>
+    @if (auth.esAdmin()) {
     <button class="primary" type="button" (click)="newOperator()" [disabled]="busy()">
       Nuevo operador
     </button>
+    }
   </header>
   @if (success()) {
     <p class="notice success" role="status">{{ success() }}</p>
@@ -97,7 +99,9 @@
             <tr>
               <th scope="col">Nombre</th>
               <th scope="col">Teléfono</th>
-              <th scope="col">Acciones</th>
+              @if (auth.esAdmin()) {
+<th scope="col">Acciones</th>
+}
             </tr>
           </thead>
           <tbody>
@@ -105,6 +109,7 @@
               <tr>
                 <th scope="row">{{ operator.nombre }}</th>
                 <td>{{ operator.telefono }}</td>
+                @if (auth.esAdmin()) {
                 <td class="row-actions">
                   <button
                     type="button"
@@ -123,6 +128,7 @@
                     Eliminar
                   </button>
                 </td>
+                }
               </tr>
             }
           </tbody>

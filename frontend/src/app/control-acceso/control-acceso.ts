@@ -3,7 +3,7 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
-import { Celda } from '../models/celda';
+import { CeldaOcupacion } from '../models/celda';
 import { Operador } from '../models/operador';
 import { EstadoVehiculo } from '../models/estancia';
 import { EstanciasService } from '../services/estancias.service';
@@ -32,7 +32,21 @@ export class ControlAcceso {
     placa: this.fb.nonNullable.control('', nonBlank),
     operador_id: this.fb.control<number | null>(null, Validators.required),
   });
-  readonly celdas = signal<Celda[]>([]);
+  readonly celdas = signal<CeldaOcupacion[]>([]);
+  /** Tipo del vehículo cuya placa se verificó (decide qué celdas se ofrecen). */
+  readonly tipoVehiculo = signal<string | null>(null);
+  readonly avisoPago = signal('');
+  readonly verificando = signal(false);
+  /** Solo celdas libres; si ya se conoce el vehículo, solo las de su tipo. */
+  readonly celdasLibres = computed(() => {
+    const tipo = this.tipoVehiculo();
+    return this.celdas().filter((c) => {
+      if (c.placa !== null) return false;
+      if (tipo === null) return true;
+      const esCeldaMoto = c.tipo.trim().toUpperCase() === 'MOTO';
+      return tipo === 'MOTO' ? esCeldaMoto : !esCeldaMoto;
+    });
+  });
   readonly operadores = signal<Operador[]>([]);
   readonly catalogLoading = signal(false);
   readonly catalogError = signal('');
@@ -46,6 +60,12 @@ export class ControlAcceso {
   readonly exitoSalida = signal('');
 
   constructor() {
+    this.entrada.controls.placa.valueChanges
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe(() => {
+        this.tipoVehiculo.set(null);
+        this.avisoPago.set('');
+      });
     this.consulta.controls.placa.valueChanges
       .pipe(takeUntilDestroyed(this.destroy))
       .subscribe(() => {
@@ -83,6 +103,50 @@ export class ControlAcceso {
       });
   }
 
+  /** Tras una entrada, vuelve a leer qué celdas quedan libres (sin tocar las selecciones). */
+  private refrescarCeldas(): void {
+    this.api
+      .celdas()
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({ next: (celdas) => this.celdas.set(celdas) });
+    this.entrada.controls.celda_id.reset();
+  }
+
+  /** Al salir del campo placa: averigua el tipo (para filtrar celdas) y avisa si la mensualidad venció. */
+  verificarPlaca(): void {
+    const valor = placa(this.entrada.controls.placa.value);
+    if (!valor || this.verificando()) return;
+    this.verificando.set(true);
+    this.errorEntrada.set('');
+    forkJoin({ estado: this.api.consultar(valor), pago: this.api.estadoPago(valor) })
+      .pipe(takeUntilDestroyed(this.destroy))
+      .subscribe({
+        next: ({ estado, pago }) => {
+          this.verificando.set(false);
+          if (placa(this.entrada.controls.placa.value) !== valor) return;
+          this.tipoVehiculo.set(estado.vehiculo.tipo);
+          const actual = this.entrada.controls.celda_id.value;
+          if (actual !== null && !this.celdasLibres().some((c) => c.id === actual))
+            this.entrada.controls.celda_id.reset();
+          if (estado.esta_dentro) this.errorEntrada.set('El vehículo ya está dentro.');
+          if (pago.estado === 'vencida')
+            this.avisoPago.set(
+              `Mensualidad vencida desde el ${pago.vence}. Puede ingresar; informa al administrador para el cobro.`,
+            );
+          else if (pago.estado === 'sin_pago')
+            this.avisoPago.set('Este vehículo aún no tiene pagos registrados. Puede ingresar; informa al administrador.');
+        },
+        error: (error) => {
+          this.verificando.set(false);
+          this.errorEntrada.set(
+            error.status === 404
+              ? 'Vehículo no registrado. Regístralo en Vehículos antes de la entrada.'
+              : this.mensaje(error),
+          );
+        },
+      });
+  }
+
   registrarEntrada(): void {
     if (this.busy() || this.catalogLoading() || this.catalogError()) return;
     this.entrada.markAllAsTouched();
@@ -110,6 +174,7 @@ export class ControlAcceso {
           this.exitoEntrada.set(
             `Entrada registrada: ${data.placa}, celda ${codigo}, ${this.fecha(result.entrada)}.`,
           );
+          this.refrescarCeldas();
         },
         error: (error) => {
           this.saving.set(false);

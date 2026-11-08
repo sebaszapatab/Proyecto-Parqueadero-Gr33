@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { AuthService } from '../services/auth.service';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
@@ -26,6 +27,7 @@ type Field = keyof VehiculoCrear;
   styleUrl: './vehiculos.css',
 })
 export class Vehiculos {
+  readonly auth = inject(AuthService);
   private readonly api = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);

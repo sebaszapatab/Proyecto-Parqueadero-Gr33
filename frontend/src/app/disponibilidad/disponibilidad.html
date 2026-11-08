@@ -1,0 +1,71 @@
+<section class="management" aria-labelledby="availability-title">
+  <header class="heading">
+    <div>
+      <span class="eyebrow">ESTADO DEL PARQUEADERO</span>
+      <h1 id="availability-title">Disponibilidad</h1>
+      <p>Consulta qué celdas están libres y cuáles están ocupadas, con su placa.</p>
+    </div>
+    <button type="button" (click)="load()" [disabled]="loading()">
+      {{ loading() ? 'Actualizando…' : 'Actualizar' }}
+    </button>
+  </header>
+
+  @if (error()) {
+    <p class="notice error" role="alert">{{ error() }}</p>
+  }
+
+  @if (loading() && !loaded()) {
+    <p class="empty" role="status">Cargando celdas…</p>
+  } @else if (loaded()) {
+    <div class="summary" role="group" aria-label="Resumen de ocupación">
+      <div class="stat">
+        <span class="stat-value">{{ cells().length }}</span>
+        <span class="stat-label">Celdas en total</span>
+      </div>
+      <div class="stat stat-occupied">
+        <span class="stat-value">{{ occupied() }}</span>
+        <span class="stat-label">Ocupadas</span>
+      </div>
+      <div class="stat stat-free">
+        <span class="stat-value">{{ free() }}</span>
+        <span class="stat-label">Libres</span>
+      </div>
+    </div>
+
+    @if (cells().length === 0) {
+      <p class="empty">Aún no hay celdas registradas. Créalas desde la sección Celdas.</p>
+    } @else {
+      <section class="panel" aria-labelledby="cars-title">
+        <div class="zone-heading">
+          <h2 id="cars-title">Carros</h2>
+          <span class="count">{{ occupiedCars() }} de {{ cars().length }} ocupadas</span>
+        </div>
+        <ul class="grid">
+          @for (cell of cars(); track cell.id) {
+            <li class="cell" [class.occupied]="cell.placa !== null">
+              <span class="code">{{ cell.codigo }}</span>
+              <span class="plate">{{ cell.placa ?? 'vacía' }}</span>
+              <span class="sr-only">{{ cell.placa === null ? 'Libre' : 'Ocupada' }}</span>
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="panel" aria-labelledby="motos-title">
+        <div class="zone-heading">
+          <h2 id="motos-title">Motos</h2>
+          <span class="count">{{ occupiedMotos() }} de {{ motos().length }} ocupadas</span>
+        </div>
+        <ul class="grid">
+          @for (cell of motos(); track cell.id) {
+            <li class="cell" [class.occupied]="cell.placa !== null">
+              <span class="code">{{ cell.codigo }}</span>
+              <span class="plate">{{ cell.placa ?? 'vacía' }}</span>
+              <span class="sr-only">{{ cell.placa === null ? 'Libre' : 'Ocupada' }}</span>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</section>

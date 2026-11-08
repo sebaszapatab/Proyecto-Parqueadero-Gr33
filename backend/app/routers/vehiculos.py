@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Query, Response
 from sqlalchemy.orm import Session
 
+from app.auth import administrador, operativo
 from app.database import get_session
 from app.schemas.vehiculo import VehiculoActualizar, VehiculoCrear, VehiculoRespuesta, VehiculosPagina
 from app.services import vehiculo as service
@@ -12,12 +13,12 @@ DatabaseSession = Annotated[Session, Depends(get_session)]
 VehicleId = Annotated[int, Path(ge=1, le=9223372036854775807)]
 
 
-@router.post("", response_model=VehiculoRespuesta, status_code=201)
+@router.post("", response_model=VehiculoRespuesta, status_code=201, dependencies=[Depends(operativo)])
 def create(data: VehiculoCrear, session: DatabaseSession):
     return service.create_vehicle(session, data)
 
 
-@router.get("", response_model=VehiculosPagina)
+@router.get("", response_model=VehiculosPagina, dependencies=[Depends(operativo)])
 def list_all(
     session: DatabaseSession,
     offset: Annotated[int, Query(ge=0, le=9223372036854775807)] = 0,
@@ -26,17 +27,17 @@ def list_all(
     return service.list_vehicles(session, offset, limit)
 
 
-@router.get("/{id}", response_model=VehiculoRespuesta)
+@router.get("/{id}", response_model=VehiculoRespuesta, dependencies=[Depends(operativo)])
 def get_one(id: VehicleId, session: DatabaseSession):
     return service.get_vehicle(session, id)
 
 
-@router.patch("/{id}", response_model=VehiculoRespuesta)
+@router.patch("/{id}", response_model=VehiculoRespuesta, dependencies=[Depends(administrador)])
 def update(id: VehicleId, data: VehiculoActualizar, session: DatabaseSession):
     return service.update_vehicle(session, id, data)
 
 
-@router.delete("/{id}", status_code=204)
+@router.delete("/{id}", status_code=204, dependencies=[Depends(administrador)])
 def delete(id: VehicleId, session: DatabaseSession) -> Response:
     service.delete_vehicle(session, id)
     return Response(status_code=204)

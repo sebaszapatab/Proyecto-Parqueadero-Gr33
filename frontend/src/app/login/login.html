@@ -1,0 +1,33 @@
+<section class="login" aria-labelledby="login-title">
+  <div class="card">
+    <span class="eyebrow">AUTOS COLOMBIA</span>
+    <h1 id="login-title">Iniciar sesión</h1>
+    <p>Ingresa con tu usuario para acceder al sistema.</p>
+    <form [formGroup]="form" (ngSubmit)="entrar()" novalidate>
+      <fieldset [disabled]="loading()">
+        <div class="field">
+          <label for="usuario">Usuario</label>
+          <input id="usuario" type="text" formControlName="usuario" autocomplete="username" />
+          <span class="field-error">
+            @if (form.controls.usuario.touched && form.controls.usuario.invalid) {
+              Escribe tu usuario.
+            }
+          </span>
+        </div>
+        <div class="field">
+          <label for="clave">Contraseña</label>
+          <input id="clave" type="password" formControlName="clave" autocomplete="current-password" />
+          <span class="field-error">
+            @if (form.controls.clave.touched && form.controls.clave.invalid) {
+              Escribe tu contraseña.
+            }
+          </span>
+        </div>
+        @if (error()) {
+          <p class="notice error" role="alert">{{ error() }}</p>
+        }
+        <button type="submit" class="primary">{{ loading() ? 'Ingresando…' : 'Ingresar' }}</button>
+      </fieldset>
+    </form>
+  </div>
+</section>

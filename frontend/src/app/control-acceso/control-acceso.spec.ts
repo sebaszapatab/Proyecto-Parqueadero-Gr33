@@ -6,7 +6,7 @@ import { ControlAcceso } from './control-acceso';
 describe('Control de acceso', () => {
   let http: HttpTestingController;
   let c: ControlAcceso;
-  const celda = { id: 2, codigo: 'TEST-C', tipo: 'Libre' };
+  const celda = { id: 2, codigo: 'TEST-C', tipo: 'Libre', placa: null };
   const stay = {
     id: 3,
     vehiculo_id: 1,
@@ -35,12 +35,16 @@ describe('Control de acceso', () => {
     });
     http = TestBed.inject(HttpTestingController);
     c = TestBed.createComponent(ControlAcceso).componentInstance;
-    http
-      .expectOne('/celdas?offset=0&limit=100')
-      .flush({ items: [celda], total: 2, offset: 0, limit: 100 });
-    http
-      .expectOne('/celdas?offset=1&limit=100')
-      .flush({ items: [{ ...celda, id: 5 }], total: 2, offset: 1, limit: 100 });
+    http.expectOne('/celdas/ocupacion').flush({
+      items: [
+        celda,
+        { id: 5, codigo: 'TEST-D', tipo: 'Libre', placa: null },
+        { id: 6, codigo: 'TEST-E', tipo: 'Libre', placa: 'OCUPADA' },
+      ],
+      total: 3,
+      ocupadas: 1,
+      libres: 2,
+    });
     http
       .expectOne('/operadores?offset=0&limit=100')
       .flush({
@@ -52,8 +56,9 @@ describe('Control de acceso', () => {
   });
   afterEach(() => http.verify());
 
-  it('recorre todas las páginas y registra entrada normalizada sin fecha ni doble envío', () => {
-    expect(c.celdas().length).toBe(2);
+  it('ofrece solo celdas libres y registra entrada normalizada sin fecha ni doble envío', () => {
+    expect(c.celdas().length).toBe(3);
+    expect(c.celdasLibres().map((x) => x.id)).toEqual([2, 5]);
     c.entrada.setValue({ placa: ' test-a ', celda_id: 2, operador_id: 4 });
     c.registrarEntrada();
     c.registrarEntrada();
@@ -62,6 +67,7 @@ describe('Control de acceso', () => {
     req.flush(stay);
     expect(c.exitoEntrada()).toContain('TEST-C');
     expect(c.exitoEntrada()).toContain('Bogotá');
+    http.expectOne('/celdas/ocupacion').flush({ items: [], total: 0, ocupadas: 0, libres: 0 });
   });
   it('rechaza blancos y muestra los conflictos de ocupación y referencias', () => {
     c.entrada.setValue({ placa: ' ', celda_id: 2, operador_id: 4 });

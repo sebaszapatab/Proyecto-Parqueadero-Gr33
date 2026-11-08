@@ -1,7 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { timeout } from 'rxjs';
-import { Celda, CeldaActualizar, CeldaCrear, CeldasPagina } from '../models/celda';
+import {
+  Celda,
+  CeldaActualizar,
+  CeldaCrear,
+  CeldasPagina,
+  OcupacionCeldas,
+} from '../models/celda';
 
 import { API_BASE_URL } from './api.service';
 
@@ -15,6 +21,9 @@ export class CeldasService {
     return this.http
       .get<CeldasPagina>(this.cells, { params: { offset, limit } })
       .pipe(timeout(15000));
+  }
+  occupancy() {
+    return this.http.get<OcupacionCeldas>(`${this.cells}/ocupacion`).pipe(timeout(15000));
   }
   get(id: number) {
     return this.http.get<Celda>(`${this.cells}/${id}`).pipe(timeout(15000));

@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { AuthService } from '../services/auth.service';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, ValidatorFn } from '@angular/forms';
@@ -17,6 +18,7 @@ type Field = keyof CeldaCrear;
   styleUrl: './celdas.css',
 })
 export class Celdas {
+  readonly auth = inject(AuthService);
   private readonly api = inject(CeldasService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);

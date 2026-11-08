@@ -3,27 +3,78 @@
     <a class="brand" routerLink="/" aria-label="Autos Colombia, inicio">
       <span class="brand-mark" aria-hidden="true">AC</span><span>Autos Colombia</span>
     </a>
+    @if (auth.autenticado()) {
     <nav aria-label="Navegación principal">
+      @if (auth.esOperativo()) {
       <a
         routerLink="/"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
+        routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
         ariaCurrentWhenActive="page"
         >Inicio</a
       >
-      <a routerLink="/control-acceso" routerLinkActive="active" ariaCurrentWhenActive="page"
+      }
+      @if (auth.esOperador()) {
+      <a
+        routerLink="/control-acceso"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
         >Control de acceso</a
       >
-      <a routerLink="/gestion/vehiculos" routerLinkActive="active" ariaCurrentWhenActive="page"
+      }
+      @if (auth.esOperativo()) {
+      <a
+        routerLink="/disponibilidad"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        >Disponibilidad</a
+      >
+      <a
+        routerLink="/gestion/vehiculos"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
         >Vehículos</a
       >
-      <a routerLink="/gestion/celdas" routerLinkActive="active" ariaCurrentWhenActive="page"
+      <a
+        routerLink="/gestion/pagos"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        >Pagos</a
+      >
+      }
+      @if (auth.esAdmin()) {
+      <a
+        routerLink="/gestion/celdas"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
         >Celdas</a
       >
-      <a routerLink="/gestion/operadores" routerLinkActive="active" ariaCurrentWhenActive="page"
+      <a
+        routerLink="/gestion/operadores"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
         >Operadores</a
       >
+      <a
+        routerLink="/gestion/usuarios"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        >Usuarios</a
+      >
+      }
+      @if (auth.esTecnico()) {
+      <a
+        routerLink="/sistema"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        >Sistema</a
+      >
+      }
     </nav>
+    <div class="session">
+      <span class="who">{{ auth.usuario()?.nombre }} · {{ rolLabel() }}</span>
+      <button type="button" class="logout" (click)="auth.logout()">Cerrar sesión</button>
+    </div>
+    }
   </header>
   <main><router-outlet /></main>
   <footer><span>Autos Colombia</span><span>Control vehicular con claridad.</span></footer>
