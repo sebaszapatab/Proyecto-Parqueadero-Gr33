@@ -1,0 +1,127 @@
+<section class="management" aria-labelledby="nov-title">
+  <header class="heading">
+    <div>
+      <span class="eyebrow">OPERACIÓN</span>
+      <h1 id="nov-title">Novedades</h1>
+      <p>Registra daños, objetos olvidados u otros sucesos de la entrada o la salida de un vehículo.</p>
+    </div>
+  </header>
+  @if (success()) {
+    <p class="notice success" role="status">{{ success() }}</p>
+  }
+  @if (actionError()) {
+    <p class="notice error" role="alert">{{ actionError() }}</p>
+  }
+
+  @if (auth.esOperador()) {
+    <section class="panel" aria-labelledby="nov-form-title">
+      <h2 id="nov-form-title">Registrar novedad</h2>
+      <p class="hint">
+        La novedad queda asociada a la última entrada del vehículo. Para una novedad de salida, el
+        vehículo ya debe haber salido.
+      </p>
+      <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+        <fieldset [disabled]="busy()">
+          <legend class="sr-only">Datos de la novedad</legend>
+          <div class="form-grid">
+            <div class="field">
+              <label for="nov-placa">Placa</label>
+              <input id="nov-placa" type="text" formControlName="placa" />
+              <span class="field-error">
+                @if (form.controls.placa.touched && form.controls.placa.invalid) {
+                  La placa es obligatoria.
+                }
+              </span>
+            </div>
+            <div class="field">
+              <label for="nov-tipo">Tipo de novedad</label>
+              <select id="nov-tipo" formControlName="tipo">
+                @for (t of tipos; track t.value) {
+                  <option [value]="t.value">{{ t.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="field">
+              <label for="nov-momento">¿Cuándo ocurrió?</label>
+              <select id="nov-momento" formControlName="momento">
+                @for (m of momentos; track m.value) {
+                  <option [value]="m.value">{{ m.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="field wide">
+              <label for="nov-desc">Descripción</label>
+              <textarea id="nov-desc" rows="3" maxlength="500" formControlName="descripcion"></textarea>
+              <span class="field-error">
+                @if (form.controls.descripcion.touched && form.controls.descripcion.invalid) {
+                  La descripción es obligatoria (máximo 500 caracteres).
+                }
+              </span>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="submit" class="primary">{{ saving() ? 'Guardando…' : 'Guardar novedad' }}</button>
+          </div>
+        </fieldset>
+      </form>
+    </section>
+  }
+
+  <section class="panel list" aria-label="Listado de novedades" [attr.aria-busy]="loading()">
+    <div class="list-heading">
+      <h2>Novedades registradas <span class="count">{{ total() }}</span></h2>
+    </div>
+    <form [formGroup]="filtro" (ngSubmit)="load(0)" class="filters">
+      <div class="field"><label for="n-desde">Desde</label><input id="n-desde" type="date" formControlName="desde" /></div>
+      <div class="field"><label for="n-hasta">Hasta</label><input id="n-hasta" type="date" formControlName="hasta" /></div>
+      <div class="field"><label for="n-placa">Placa</label><input id="n-placa" type="text" formControlName="placa" /></div>
+      <button type="submit" [disabled]="loading()">Filtrar</button>
+    </form>
+    @if (loading()) {
+      <p class="empty" role="status">Cargando novedades…</p>
+    } @else if (listError()) {
+      <p class="notice error" role="alert">{{ listError() }}</p>
+    } @else if (!items().length) {
+      <p class="empty">No hay novedades para este filtro.</p>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <caption class="sr-only">Novedades registradas</caption>
+          <thead>
+            <tr>
+              <th scope="col">Fecha</th>
+              <th scope="col">Placa</th>
+              <th scope="col">Celda</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Momento</th>
+              <th scope="col">Descripción</th>
+              <th scope="col">Registró</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (n of items(); track n.id) {
+              <tr>
+                <td>{{ fecha(n.creada) }}</td>
+                <th scope="row">{{ n.placa }}</th>
+                <td>{{ n.celda }}</td>
+                <td><span class="type-tag">{{ etiquetaTipo(n.tipo) }}</span></td>
+                <td>{{ etiquetaMomento(n.momento) }}</td>
+                <td>{{ n.descripcion }}</td>
+                <td>{{ n.registrada_por }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    <nav class="pagination" aria-label="Paginación de novedades">
+      <span>Página {{ page() }} de {{ pages() }} · {{ limit }} por página</span>
+      <div class="actions">
+        <button type="button" (click)="load(offset() - limit)" [disabled]="loading() || offset() === 0">Anterior</button
+        ><button type="button" (click)="load(offset() + limit)" [disabled]="loading() || offset() + limit >= total()">
+          Siguiente
+        </button>
+      </div>
+    </nav>
+  </section>
+</section>

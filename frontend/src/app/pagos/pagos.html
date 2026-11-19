@@ -102,23 +102,47 @@
 
   <section class="panel list" aria-labelledby="venc-title">
     <div class="list-heading">
-      <h2 id="venc-title">Mensualidades vencidas o sin pago <span class="count">{{ vencidos()?.total ?? 0 }}</span></h2>
+      <h2 id="venc-title">Estado de mensualidades <span class="count">{{ vencidos()?.total ?? 0 }}</span></h2>
       <button type="button" (click)="cargarVencidos()">Actualizar</button>
     </div>
+    @if (porVencer().length) {
+      <div class="notice error alarma" role="alert">
+        <strong>⚠ Alarma: mensualidad por vencer</strong>
+        <ul>
+          @for (i of porVencer(); track i.placa) {
+            <li>{{ i.placa }} · {{ bateria(i).texto }} ({{ fecha(i.vence!) }})</li>
+          }
+        </ul>
+      </div>
+    }
     @if (vencidos(); as v) {
       @if (!v.items.length) {
-        <p class="empty">Todos los vehículos están al día.</p>
+        <p class="empty">Aún no hay vehículos registrados.</p>
       } @else {
         <div class="table-scroll">
           <table>
-            <caption class="sr-only">Vehículos con mensualidad vencida</caption>
-            <thead><tr><th scope="col">Placa</th><th scope="col">Tipo</th><th scope="col">Estado</th><th scope="col">Venció</th></tr></thead>
+            <caption class="sr-only">Estado de la mensualidad de cada vehículo</caption>
+            <thead><tr><th scope="col">Placa</th><th scope="col">Tipo</th><th scope="col">Estado</th><th scope="col">Mensualidad</th><th scope="col">Vence</th></tr></thead>
             <tbody>
               @for (i of v.items; track i.placa) {
-                <tr>
+                <tr [class.paid]="i.estado === 'vigente'">
                   <th scope="row">{{ i.placa }}</th>
                   <td>{{ i.tipo }}</td>
-                  <td>{{ etiquetaEstado(i.estado) }}</td>
+                  <td>
+                    @if (i.estado === 'vigente') {
+                      <span class="check" aria-hidden="true">✔</span> Pagado · {{ etiquetaEstado(i.estado) }}
+                    } @else {
+                      {{ etiquetaEstado(i.estado) }}
+                    }
+                  </td>
+                  <td>
+                    @let b = bateria(i);
+                    <div class="battery" [attr.data-nivel]="b.nivel" role="img" [attr.aria-label]="'Mensualidad: ' + b.texto">
+                      <div class="battery-body"><div class="battery-fill" [style.width.%]="b.pct"></div></div>
+                      <span class="battery-tip"></span>
+                    </div>
+                    <small class="battery-text" [attr.data-nivel]="b.nivel">{{ b.texto }}</small>
+                  </td>
                   <td>{{ i.vence ? fecha(i.vence) : '—' }}</td>
                 </tr>
               }

@@ -68,7 +68,12 @@ def get_cell(session: Session, cell_id: int) -> Celda:
 @database_operation
 def update_cell(session: Session, cell_id: int, data: CeldaActualizar) -> Celda:
     cell = find_cell(session, cell_id)
-    for key, value in data.model_dump(exclude_unset=True).items():
+    changes = data.model_dump(exclude_unset=True)
+    if changes.get("en_servicio") is False and session.scalar(
+        select(Estancia.id).where(Estancia.celda_id == cell.id, Estancia.salida.is_(None))
+    ) is not None:
+        raise CeldaError(409, "La celda está ocupada: registra la salida antes de ponerla fuera de servicio.")
+    for key, value in changes.items():
         setattr(cell, key, value)
     session.commit()
     session.refresh(cell)
@@ -86,15 +91,17 @@ def delete_cell(session: Session, cell_id: int) -> None:
 def cells_occupancy(session: Session) -> dict:
     """Todas las celdas con la placa del vehículo que tienen dentro, si lo hay."""
     rows = session.execute(
-        select(Celda.id, Celda.codigo, Celda.tipo, Vehiculo.placa)
+        select(Celda.id, Celda.codigo, Celda.tipo, Celda.en_servicio, Vehiculo.placa)
         .select_from(Celda)
         .outerjoin(Estancia, and_(Estancia.celda_id == Celda.id, Estancia.salida.is_(None)))
         .outerjoin(Vehiculo, Vehiculo.id == Estancia.vehiculo_id)
         .order_by(Celda.id)
     ).all()
     items = [
-        {"id": row.id, "codigo": row.codigo, "tipo": row.tipo, "placa": row.placa}
+        {"id": row.id, "codigo": row.codigo, "tipo": row.tipo, "placa": row.placa, "en_servicio": row.en_servicio}
         for row in rows
     ]
     occupied = sum(1 for item in items if item["placa"] is not None)
-    return {"items": items, "total": len(items), "ocupadas": occupied, "libres": len(items) - occupied}
+    out = sum(1 for item in items if item["placa"] is None and not item["en_servicio"])
+    return {"items": items, "total": len(items), "ocupadas": occupied,
+            "libres": len(items) - occupied - out, "fuera_de_servicio": out}

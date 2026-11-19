@@ -18,6 +18,7 @@ class CeldaActualizar(BaseModel):
     model_config = ConfigDict(extra="forbid")
     codigo: Codigo | None = None
     tipo: Texto | None = None
+    en_servicio: bool | None = None
 
     @field_validator("*", mode="before")
     @classmethod
@@ -30,6 +31,7 @@ class CeldaActualizar(BaseModel):
 class CeldaRespuesta(CeldaCrear):
     model_config = ConfigDict(from_attributes=True, extra="forbid")
     id: int
+    en_servicio: bool
 
 
 class CeldasPagina(BaseModel):
@@ -46,10 +48,12 @@ class CeldaOcupacion(BaseModel):
     codigo: str
     tipo: str
     placa: str | None
+    en_servicio: bool
 
 
 class OcupacionRespuesta(BaseModel):
     items: list[CeldaOcupacion]
     total: int
     ocupadas: int
-    libres: int
+    libres: int  # vacías y en servicio
+    fuera_de_servicio: int

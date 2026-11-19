@@ -48,6 +48,27 @@ describe('Disponibilidad de celdas', () => {
     expect(component.free()).toBe(2);
   });
 
+  it('marca las celdas fuera de servicio y no las cuenta como libres', () => {
+    http.expectOne('/celdas/ocupacion').flush({
+      items: [
+        { id: 1, codigo: 'C-01', tipo: 'AUTOMOVIL', placa: 'ABC123', en_servicio: true },
+        { id: 2, codigo: 'C-02', tipo: 'AUTOMOVIL', placa: null, en_servicio: false },
+        { id: 3, codigo: 'C-03', tipo: 'AUTOMOVIL', placa: null, en_servicio: true },
+      ],
+      total: 3,
+      ocupadas: 1,
+      libres: 1,
+      fuera_de_servicio: 1,
+    });
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    expect(component.outOfService()).toBe(1);
+    expect(component.free()).toBe(1);
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelectorAll('.cell.out').length).toBe(1);
+    expect(root.textContent).toContain('fuera de servicio');
+  });
+
   it('muestra un error cuando el servicio no responde', () => {
     http.expectOne('/celdas/ocupacion').flush({}, { status: 503, statusText: 'Service Unavailable' });
     fixture.detectChanges();

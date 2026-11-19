@@ -64,6 +64,8 @@ class Celda(Base):
     id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
     codigo: Mapped[str] = mapped_column(Text, nullable=False)
     tipo: Mapped[str] = mapped_column(Text, nullable=False)
+    # False = fuera de servicio: no se ofrece en nuevas entradas.
+    en_servicio: Mapped[bool] = mapped_column(Boolean, server_default=true(), nullable=False)
 
     @validates("codigo", "tipo")
     def validate_text(self, key: str, value: str) -> str:
@@ -249,3 +251,46 @@ class Pago(Base):
     vehiculo: Mapped[Vehiculo] = relationship()
     registrado_por: Mapped[Usuario] = relationship(foreign_keys=[registrado_por_id])
     anulado_por: Mapped[Usuario | None] = relationship(foreign_keys=[anulado_por_id])
+
+
+TIPOS_NOVEDAD = ("DANO", "OBJETO_OLVIDADO", "OTRO")
+
+
+class Novedad(Base):
+    """Novedad (daño, objeto olvidado, etc.) asociada a la entrada o salida de una estancia."""
+    __tablename__ = "novedad"
+    __table_args__ = (
+        CheckConstraint("tipo IN ('DANO', 'OBJETO_OLVIDADO', 'OTRO')", name="ck_novedad_tipo"),
+        CheckConstraint("momento IN ('ENTRADA', 'SALIDA')", name="ck_novedad_momento"),
+        CheckConstraint("descripcion ~ '[^[:space:]]'", name="ck_novedad_descripcion_no_vacia"),
+        Index("ix_novedad_creada", "creada"),
+        Index("ix_novedad_estancia", "estancia_id"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    estancia_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("estancia.id", name="fk_novedad_estancia", ondelete="RESTRICT"), nullable=False
+    )
+    tipo: Mapped[str] = mapped_column(Text, nullable=False)
+    momento: Mapped[str] = mapped_column(Text, nullable=False)
+    descripcion: Mapped[str] = mapped_column(Text, nullable=False)
+    registrada_por_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("usuario.id", name="fk_novedad_usuario", ondelete="RESTRICT"), nullable=False
+    )
+    creada: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    estancia: Mapped[Estancia] = relationship()
+    registrada_por: Mapped[Usuario] = relationship()
+
+
+class BitacoraError(Base):
+    """Errores del servidor (5xx) para el mantenimiento; no guarda datos personales ni secretos."""
+    __tablename__ = "bitacora_error"
+    __table_args__ = (Index("ix_bitacora_error_creado", "creado"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    creado: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    metodo: Mapped[str] = mapped_column(Text, nullable=False)
+    ruta: Mapped[str] = mapped_column(Text, nullable=False)
+    estado: Mapped[int] = mapped_column(Integer, nullable=False)
+    mensaje: Mapped[str] = mapped_column(Text, nullable=False)

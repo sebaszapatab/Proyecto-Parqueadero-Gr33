@@ -34,7 +34,7 @@ describe('Navegación', () => {
 
   it('el operador opera: control de acceso, disponibilidad y pagos; nada de gestión', async () => {
     const root = await crear('operador');
-    for (const ruta of ['/control-acceso', '/disponibilidad', '/gestion/vehiculos', '/gestion/pagos'])
+    for (const ruta of ['/control-acceso', '/disponibilidad', '/gestion/vehiculos', '/gestion/pagos', '/gestion/novedades', '/gestion/reportes'])
       expect(root.querySelector(`a[href="${ruta}"]`)).not.toBeNull();
     for (const ruta of ['/gestion/usuarios', '/gestion/operadores', '/gestion/celdas', '/sistema'])
       expect(root.querySelector(`a[href="${ruta}"]`)).toBeNull();

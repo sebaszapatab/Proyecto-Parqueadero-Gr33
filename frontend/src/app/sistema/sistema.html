@@ -41,4 +41,41 @@
       </div>
     </section>
   }
+  <section class="panel" aria-labelledby="bit-title">
+    <h2 id="bit-title">Bitácora de errores <span class="count">{{ bitacora()?.total ?? 0 }}</span></h2>
+    <p class="hint">Errores del servidor (códigos 5xx). Se muestran los 20 más recientes.</p>
+    @if (bitacoraError()) {
+      <p class="notice error" role="alert">{{ bitacoraError() }}</p>
+    } @else if (bitacora(); as bit) {
+      @if (!bit.items.length) {
+        <p class="empty">No hay errores registrados.</p>
+      } @else {
+        <div class="table-scroll">
+          <table>
+            <caption class="sr-only">Errores del servidor</caption>
+            <thead>
+              <tr>
+                <th scope="col">Fecha</th>
+                <th scope="col">Método</th>
+                <th scope="col">Ruta</th>
+                <th scope="col">Código</th>
+                <th scope="col">Mensaje</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of bit.items; track e.id) {
+                <tr>
+                  <td>{{ fecha(e.creado) }}</td>
+                  <td>{{ e.metodo }}</td>
+                  <td>{{ e.ruta }}</td>
+                  <td>{{ e.estado }}</td>
+                  <td>{{ e.mensaje }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </section>
 </section>

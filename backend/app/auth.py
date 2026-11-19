@@ -31,6 +31,10 @@ def get_current_user(token: Annotated[str, Depends(get_token)],
     user = service.user_from_token(session, token)
     if user is None:
         raise UsuarioError(401, "Tu sesión expiró. Inicia sesión de nuevo.")
+    # Libera la transacción abierta por la lectura de la sesión: los servicios
+    # abren la suya con session.begin() sobre la misma conexión.
+    session.expunge(user)
+    session.rollback()
     return user
 
 

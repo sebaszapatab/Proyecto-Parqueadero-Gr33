@@ -171,7 +171,7 @@ def list_pagos(session: Session, offset: int, limit: int, desde: date | None, ha
 
 
 @database_operation
-def list_vencidos(session: Session) -> dict:
+def list_vencidos(session: Session, todos: bool = False) -> dict:
     vence = select(Pago.vehiculo_id, func.max(Pago.hasta).label("vence")).where(
         Pago.anulado.is_(False)).group_by(Pago.vehiculo_id).subquery()
     rows = session.execute(select(Vehiculo, vence.c.vence).outerjoin(vence, vence.c.vehiculo_id == Vehiculo.id)
@@ -181,7 +181,7 @@ def list_vencidos(session: Session) -> dict:
     items = []
     for vehiculo, fecha in rows:
         estado = clasificar(fecha, hoy_)
-        if estado != "vigente":
+        if todos or estado != "vigente":
             items.append({"placa": vehiculo.placa, "tipo": vehiculo.tipo, "estado": estado, "vence": fecha,
                           "valor_mensualidad": tarifas.get(vehiculo.tipo)})
     return {"items": items, "total": len(items)}

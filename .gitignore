@@ -62,3 +62,8 @@ Desktop.ini
 .history/
 *.swp
 *.swo
+
+# Playwright
+frontend/test-results/
+frontend/playwright-report/
+Pruebas_Playwright_Pagos.zip

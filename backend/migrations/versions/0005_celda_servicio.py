@@ -1,0 +1,20 @@
+"""Agrega celda.en_servicio para marcar celdas fuera de servicio.
+
+Revision ID: 0005
+Revises: 0004
+"""
+from alembic import op
+import sqlalchemy as sa
+
+revision = "0005"
+down_revision = "0004"
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    op.add_column("celda", sa.Column("en_servicio", sa.Boolean(), server_default=sa.true(), nullable=False))
+
+
+def downgrade() -> None:
+    op.drop_column("celda", "en_servicio")

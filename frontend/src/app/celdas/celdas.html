@@ -96,6 +96,7 @@
             <tr>
               <th scope="col">Código</th>
               <th scope="col">Tipo</th>
+              <th scope="col">Estado</th>
               @if (auth.esAdmin()) {
 <th scope="col">Acciones</th>
 }
@@ -106,6 +107,7 @@
               <tr>
                 <th scope="row">{{ cell.codigo }}</th>
                 <td>{{ cell.tipo }}</td>
+                <td>{{ cell.en_servicio ? 'En servicio' : 'Fuera de servicio' }}</td>
                 @if (auth.esAdmin()) {
                 <td class="row-actions">
                   <button
@@ -115,6 +117,13 @@
                     [attr.aria-label]="'Editar ' + cell.codigo"
                   >
                     Editar</button
+                  ><button
+                    type="button"
+                    (click)="cambiarServicio(cell)"
+                    [disabled]="busy()"
+                    [attr.aria-label]="(cell.en_servicio ? 'Poner fuera de servicio ' : 'Reactivar ') + cell.codigo"
+                  >
+                    {{ cell.en_servicio ? 'Fuera de servicio' : 'Reactivar' }}</button
                   ><button
                     type="button"
                     class="delete-link"

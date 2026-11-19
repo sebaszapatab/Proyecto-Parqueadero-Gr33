@@ -69,6 +69,8 @@ class ServicioEstancia:
         celda = self.session.get(Celda, data.celda_id)
         if celda is None:
             raise EstanciaError(404, "Celda no encontrada.")
+        if not celda.en_servicio:
+            raise EstanciaError(409, "La celda está fuera de servicio.")
         operador = self._operador(data.operador_id)
         if self.session.scalar(select(Estancia.id).where(
             Estancia.vehiculo_id == vehiculo.id, Estancia.salida.is_(None)

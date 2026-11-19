@@ -1,12 +1,15 @@
+from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from app.auth import tecnico
 from app.database import get_session
 from app.models import Celda, Estancia, Pago, Usuario, Vehiculo
+from app.services import bitacora as bitacora_service
 
 router = APIRouter(prefix="/sistema", tags=["Sistema"], dependencies=[Depends(tecnico)])
 DatabaseSession = Annotated[Session, Depends(get_session)]
@@ -32,3 +35,24 @@ def estado(session: DatabaseSession) -> dict:
         session.rollback()
         return {"api": "ok", "base_datos": "error", "migracion": None, "conteos": {}}
     return {"api": "ok", "base_datos": base_datos, "migracion": version, "conteos": conteos}
+
+
+class ErrorRegistrado(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    creado: datetime
+    metodo: str
+    ruta: str
+    estado: int
+    mensaje: str
+
+
+class BitacoraRespuesta(BaseModel):
+    items: list[ErrorRegistrado]
+    total: int
+
+
+@router.get("/bitacora", response_model=BitacoraRespuesta)
+def bitacora(session: DatabaseSession, limit: Annotated[int, Query(ge=1, le=100)] = 20) -> dict:
+    """Últimos errores del servidor (5xx), del más reciente al más antiguo."""
+    return bitacora_service.listar_errores(session, limit)

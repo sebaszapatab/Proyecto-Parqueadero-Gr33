@@ -21,7 +21,7 @@ export class PagosService {
       .pipe(timeout(15000));
   }
   vencidos() {
-    return this.http.get<Vencidos>(`${this.url}/vencidos`).pipe(timeout(15000));
+    return this.http.get<Vencidos>(`${this.url}/vencidos`, { params: { todos: true } }).pipe(timeout(15000));
   }
   registrar(placa: string) {
     return this.http.post<Pago>(this.url, { placa }).pipe(timeout(15000));

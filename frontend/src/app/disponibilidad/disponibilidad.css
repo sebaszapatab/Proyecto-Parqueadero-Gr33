@@ -85,7 +85,7 @@ button:focus-visible {
 }
 .summary {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -196,4 +196,16 @@ button:focus-visible {
   .panel {
     padding: 20px;
   }
+}
+
+.cell.out {
+  background: #ececea;
+  border: 1px dashed var(--line-strong);
+}
+.cell.out .code,
+.cell.out .plate {
+  color: var(--muted);
+}
+.stat-out {
+  border-left-color: var(--line-strong);
 }

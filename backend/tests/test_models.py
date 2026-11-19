@@ -66,10 +66,12 @@ def test_migration_matches_models_without_connecting(monkeypatch):
     monkeypatch.setattr(migration.op, "create_table", lambda name, *args: sa.Table(name, metadata, *args))
     migration.upgrade()
     assert set(metadata.tables) == {"vehiculo", "celda", "operador"}
+    # Columnas que agregan migraciones posteriores (0005: celda.en_servicio).
+    later = {"celda": {"en_servicio"}}
     for name, table in metadata.tables.items():
         model_table = Base.metadata.tables[name]
         assert [(c.name, str(c.type), c.nullable) for c in table.columns] == [
-            (c.name, str(c.type), c.nullable) for c in model_table.columns
+            (c.name, str(c.type), c.nullable) for c in model_table.columns if c.name not in later.get(name, set())
         ]
         def constraints(t):
             return {(c.name, str(c.sqltext)) for c in t.constraints if isinstance(c, sa.CheckConstraint)}

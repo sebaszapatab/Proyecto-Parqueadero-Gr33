@@ -210,6 +210,35 @@ export class Celdas {
       });
   }
 
+  /** Pone la celda fuera de servicio o la reactiva (solo administrador). */
+  cambiarServicio(cell: Celda): void {
+    if (this.busy()) return;
+    this.saving.set(true);
+    this.actionError.set('');
+    this.success.set('');
+    const nuevo = !cell.en_servicio;
+    this.api
+      .update(cell.id, { en_servicio: nuevo })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.success.set(
+            `Celda ${cell.codigo} ${nuevo ? 'reactivada' : 'puesta fuera de servicio'} correctamente.`,
+          );
+          this.load();
+        },
+        error: (error: HttpErrorResponse) => {
+          this.saving.set(false);
+          this.actionError.set(
+            error.status === 409 && typeof error.error?.detail === 'string'
+              ? error.error.detail
+              : this.errorMessage(error),
+          );
+        },
+      });
+  }
+
   private errorMessage(error: HttpErrorResponse, deleting = false): string {
     if (error.status === 404) return 'La celda ya no existe. Actualiza el listado.';
     if (error.status === 409)

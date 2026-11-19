@@ -40,5 +40,14 @@
   },
   "/sistema/**": {
     "target": "http://127.0.0.1:8000"
+  },
+  "/novedades": {
+    "target": "http://127.0.0.1:8000"
+  },
+  "/novedades/**": {
+    "target": "http://127.0.0.1:8000"
+  },
+  "/reportes/**": {
+    "target": "http://127.0.0.1:8000"
   }
 }

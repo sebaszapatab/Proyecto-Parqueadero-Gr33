@@ -375,3 +375,87 @@ thead th {
     box-shadow: none;
   }
 }
+
+tr.paid td,
+tr.paid th {
+  color: #1b7a3a;
+}
+
+.check {
+  font-weight: 700;
+}
+
+.battery {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.battery-body {
+  width: 96px;
+  height: 20px;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+.battery-tip {
+  width: 4px;
+  height: 10px;
+  background: currentColor;
+  border-radius: 0 2px 2px 0;
+}
+
+.battery-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: currentColor;
+  transition: width 0.3s;
+}
+
+.battery[data-nivel='ok'],
+.battery-text[data-nivel='ok'] {
+  color: #1b7a3a;
+}
+
+.battery[data-nivel='medio'],
+.battery-text[data-nivel='medio'] {
+  color: #b7791f;
+}
+
+.battery[data-nivel='alarma'],
+.battery-text[data-nivel='alarma'] {
+  color: #c0392b;
+  font-weight: 700;
+}
+
+.battery[data-nivel='alarma'] .battery-fill {
+  animation: parpadeo 1s ease-in-out infinite;
+}
+
+.battery[data-nivel='vacia'],
+.battery-text[data-nivel='vacia'] {
+  color: #777;
+}
+
+.battery-text {
+  margin-left: 0.5rem;
+}
+
+.alarma ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.25rem;
+}
+
+@keyframes parpadeo {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battery[data-nivel='alarma'] .battery-fill {
+    animation: none;
+  }
+}

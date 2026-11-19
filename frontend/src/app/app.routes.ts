@@ -50,6 +50,18 @@ export const routes: Routes = [
     loadComponent: () => import('./pagos/pagos').then((m) => m.Pagos),
   },
   {
+    path: 'gestion/novedades',
+    title: 'Novedades | Autos Colombia',
+    canActivate: [requiereRol('operador', 'administrador')],
+    loadComponent: () => import('./novedades/novedades').then((m) => m.Novedades),
+  },
+  {
+    path: 'gestion/reportes',
+    title: 'Reportes | Autos Colombia',
+    canActivate: [requiereRol('operador', 'administrador')],
+    loadComponent: () => import('./reportes/reportes').then((m) => m.Reportes),
+  },
+  {
     path: 'sistema',
     title: 'Estado del sistema | Autos Colombia',
     canActivate: [requiereRol('desarrollador')],

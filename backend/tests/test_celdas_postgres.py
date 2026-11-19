@@ -28,7 +28,7 @@ def connection():
 def test_celda_schema_and_constraints(connection):
     inspector = inspect(connection)
     columns = {c['name']: c for c in inspector.get_columns('celda')}
-    assert set(columns) == {'id', 'codigo', 'tipo'}
+    assert set(columns) == {'id', 'codigo', 'tipo', 'en_servicio'}
     assert str(columns['id']['type']) == 'BIGINT'
     assert columns['id']['identity']['always']
     assert all(not c['nullable'] for c in columns.values())

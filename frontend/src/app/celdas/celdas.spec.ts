@@ -6,7 +6,7 @@ import { Celdas } from './celdas';
 describe('Gestión de celdas', () => {
   let fixture: ComponentFixture<Celdas>;
   let http: HttpTestingController;
-  const cell = { id: 1, codigo: 'A-01', tipo: 'Categoría libre' };
+  const cell = { id: 1, codigo: 'A-01', tipo: 'Categoría libre', en_servicio: true };
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Celdas],
@@ -90,5 +90,20 @@ describe('Gestión de celdas', () => {
       .expectOne('/celdas?offset=0&limit=10')
       .flush({ items: [], total: 0, offset: 0, limit: 10 });
     expect(c.success()).toContain('eliminada');
+  });
+
+  it('pone una celda fuera de servicio y muestra el motivo si está ocupada', () => {
+    const c = fixture.componentInstance;
+    c.cambiarServicio(cell);
+    const req = http.expectOne({ method: 'PATCH', url: '/celdas/1' });
+    expect(req.request.body).toEqual({ en_servicio: false });
+    req.flush({ detail: 'La celda está ocupada: registra la salida antes de ponerla fuera de servicio.' }, { status: 409, statusText: 'Conflict' });
+    expect(c.actionError()).toContain('registra la salida');
+    c.cambiarServicio(cell);
+    http.expectOne({ method: 'PATCH', url: '/celdas/1' }).flush({ ...cell, en_servicio: false });
+    http.expectOne('/celdas?offset=0&limit=10').flush({ items: [{ ...cell, en_servicio: false }], total: 1, offset: 0, limit: 10 });
+    expect(c.success()).toContain('fuera de servicio');
+    c.cambiarServicio({ ...cell, en_servicio: false });
+    expect(http.expectOne({ method: 'PATCH', url: '/celdas/1' }).request.body).toEqual({ en_servicio: true });
   });
 });

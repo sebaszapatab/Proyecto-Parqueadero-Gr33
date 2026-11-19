@@ -74,6 +74,32 @@ export class Pagos {
     }).format(new Date(value));
   }
 
+  /** Días que le quedan a la mensualidad (0 = vence hoy), con la fecha de Bogotá. */
+  diasRestantes(vence: string): number {
+    const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date());
+    const [y1, m1, d1] = hoy.split('-').map(Number);
+    const [y2, m2, d2] = vence.slice(0, 10).split('-').map(Number);
+    return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000);
+  }
+
+  /** Batería de un mes: se vacía día a día; alarma cuando falta 1 día o menos. */
+  bateria(i: EstadoPago): { pct: number; nivel: 'ok' | 'medio' | 'alarma' | 'vacia'; texto: string } {
+    if (!i.vence || i.estado === 'sin_pago') return { pct: 0, nivel: 'vacia', texto: 'Sin pago' };
+    const dias = this.diasRestantes(i.vence);
+    if (dias < 0) return { pct: 0, nivel: 'vacia', texto: `Vencida hace ${-dias} ${-dias === 1 ? 'día' : 'días'}` };
+    const pct = Math.min(100, Math.round((dias / 30) * 100));
+    if (dias === 0) return { pct: 3, nivel: 'alarma', texto: '¡Vence hoy!' };
+    if (dias === 1) return { pct: pct, nivel: 'alarma', texto: '¡Vence mañana!' };
+    return { pct, nivel: dias <= 7 ? 'medio' : 'ok', texto: `${dias} días` };
+  }
+
+  readonly porVencer = computed(() =>
+    (this.vencidos()?.items ?? []).filter((i) => {
+      if (i.estado !== 'vigente' || !i.vence) return false;
+      return this.diasRestantes(i.vence) <= 1;
+    }),
+  );
+
   etiquetaEstado(e: EstadoPago['estado']): string {
     return { vigente: 'Al día', vencida: 'Vencida', sin_pago: 'Sin pagos' }[e];
   }

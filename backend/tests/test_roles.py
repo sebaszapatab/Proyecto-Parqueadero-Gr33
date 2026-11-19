@@ -17,6 +17,12 @@ PROHIBIDO = [
     ("desarrollador", "get", "/celdas/ocupacion"),
     ("desarrollador", "get", "/pagos/vencidos"),
     ("desarrollador", "get", "/pagos/tarifas"),
+    ("desarrollador", "get", "/novedades"),                    # novedades: operador (registra) y administrador (consulta)
+    ("administrador", "post", "/novedades"),
+    ("desarrollador", "post", "/novedades"),
+    ("desarrollador", "get", "/reportes/movimientos"),
+    ("operador", "get", "/sistema/bitacora"),                  # bitácora: solo desarrollador
+    ("administrador", "get", "/sistema/bitacora"),
 ]
 
 
@@ -25,5 +31,8 @@ def test_rol_sin_permiso_recibe_403(rol, metodo, ruta):
     app.dependency_overrides[get_current_user] = lambda: SimpleNamespace(
         id=1, nombre="x", usuario="x", rol=rol, activo=True)
     with TestClient(app) as client:
-        respuesta = getattr(client, metodo)(ruta)
+        if metodo == "post":
+            respuesta = client.post(ruta, json={})
+        else:
+            respuesta = getattr(client, metodo)(ruta)
     assert respuesta.status_code == 403

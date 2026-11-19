@@ -47,7 +47,7 @@ def test_ocupacion_muestra_la_placa_mientras_la_estancia_esta_abierta(connection
 
                 data, item = mine()
                 assert item["placa"] is None
-                assert data["total"] == data["ocupadas"] + data["libres"]
+                assert data["total"] == data["ocupadas"] + data["libres"] + data["fuera_de_servicio"]
 
                 entry = client.post("/estancias/entrada", json={
                     "placa": plate, "celda_id": cell["id"], "operador_id": operator["id"],
@@ -55,7 +55,7 @@ def test_ocupacion_muestra_la_placa_mientras_la_estancia_esta_abierta(connection
                 assert entry.status_code == 201
                 data, item = mine()
                 assert item["placa"] == plate
-                assert data["total"] == data["ocupadas"] + data["libres"]
+                assert data["total"] == data["ocupadas"] + data["libres"] + data["fuera_de_servicio"]
 
                 exit_ = client.post("/estancias/salida", json={"placa": plate, "operador_id": operator["id"]})
                 assert exit_.status_code == 200

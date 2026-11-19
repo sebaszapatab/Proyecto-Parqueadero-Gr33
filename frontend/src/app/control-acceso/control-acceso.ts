@@ -41,7 +41,7 @@ export class ControlAcceso {
   readonly celdasLibres = computed(() => {
     const tipo = this.tipoVehiculo();
     return this.celdas().filter((c) => {
-      if (c.placa !== null) return false;
+      if (c.placa !== null || c.en_servicio === false) return false;
       if (tipo === null) return true;
       const esCeldaMoto = c.tipo.trim().toUpperCase() === 'MOTO';
       return tipo === 'MOTO' ? esCeldaMoto : !esCeldaMoto;

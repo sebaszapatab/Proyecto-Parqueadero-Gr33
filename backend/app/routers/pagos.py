@@ -31,8 +31,9 @@ def cambiar_tarifa(tipo: Tipo, data: TarifaActualizar, session: DatabaseSession,
 
 
 @router.get("/vencidos", response_model=VencidosRespuesta, dependencies=[Depends(operativo)])
-def vencidos(session: DatabaseSession):
-    return service.list_vencidos(session)
+def vencidos(session: DatabaseSession, todos: bool = False):
+    """Con todos=true incluye también los vehículos al día (estado "vigente")."""
+    return service.list_vencidos(session, todos)
 
 
 @router.get("/estado/{placa}", response_model=EstadoPago, dependencies=[Depends(operativo)])

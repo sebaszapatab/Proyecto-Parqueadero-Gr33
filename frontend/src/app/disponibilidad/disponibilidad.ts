@@ -20,7 +20,10 @@ export class Disponibilidad {
   readonly cars = computed(() => this.cells().filter((cell) => !this.isMoto(cell)));
   readonly motos = computed(() => this.cells().filter((cell) => this.isMoto(cell)));
   readonly occupied = computed(() => this.cells().filter((cell) => cell.placa !== null).length);
-  readonly free = computed(() => this.cells().length - this.occupied());
+  readonly outOfService = computed(
+    () => this.cells().filter((cell) => cell.placa === null && cell.en_servicio === false).length,
+  );
+  readonly free = computed(() => this.cells().length - this.occupied() - this.outOfService());
   readonly occupiedCars = computed(() => this.cars().filter((cell) => cell.placa !== null).length);
   readonly occupiedMotos = computed(
     () => this.motos().filter((cell) => cell.placa !== null).length,
@@ -50,6 +53,10 @@ export class Disponibilidad {
           );
         },
       });
+  }
+
+  fueraDeServicio(cell: CeldaOcupacion): boolean {
+    return cell.placa === null && cell.en_servicio === false;
   }
 
   isMoto(cell: CeldaOcupacion): boolean {

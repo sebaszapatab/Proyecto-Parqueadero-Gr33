@@ -98,9 +98,9 @@ Son claves de demostración para una base local; no se usan en ningún servicio 
 
 | Rol | Qué puede hacer |
 | --- | --- |
-| **Operador** | Registrar entradas y salidas, asignar celdas libres, ver la disponibilidad, registrar vehículos y recibir pagos. |
-| **Administrador** | Gestionar usuarios, operadores y celdas; editar y eliminar vehículos; en pagos, tarifas, reporte y anulación con motivo (también puede cobrar). Ve la disponibilidad solo para consulta. |
-| **Desarrollador** | Solo la pantalla **Sistema**: estado técnico (API, base de datos, versión de migración y conteos generales). |
+| **Operador** | Registrar entradas y salidas, asignar celdas libres, ver la disponibilidad, registrar vehículos, registrar novedades (daños, objetos olvidados), consultar el reporte de entradas y salidas por fechas y recibir pagos. |
+| **Administrador** | Gestionar usuarios, operadores y celdas (incluso ponerlas fuera de servicio); editar y eliminar vehículos; consultar novedades y reportes; en pagos, tarifas, reporte y anulación con motivo (también puede cobrar). Ve la disponibilidad solo para consulta. |
+| **Desarrollador** | Solo la pantalla **Sistema**: estado técnico (API, base de datos, versión de migración, conteos generales) y bitácora de errores del servidor. |
 
 Los permisos se validan en el servidor, no solo en el menú.
 
@@ -113,7 +113,11 @@ Los permisos se validan en el servidor, no solo en el menú.
    (extiende el vencimiento un mes) y revisa el comprobante y el reporte.
 4. Vuelve como operador y registra otra entrada con un vehículo sin pago: aparece un aviso
    amarillo de mensualidad vencida, pero **no se bloquea** el ingreso.
-5. Entra como **desarrollador** → *Sistema*.
+5. Como **operador**, abre *Novedades* y registra un daño o un objeto olvidado para `ABC123`; luego revisa *Reportes*
+   (entradas y salidas por rango de fechas, con descarga en CSV).
+6. Como **administrador**, abre *Celdas* y pon una celda **fuera de servicio**: deja de aparecer en
+   *Disponibilidad* como libre y no se ofrece en nuevas entradas.
+7. Entra como **desarrollador** → *Sistema*: estado técnico y bitácora de errores.
 
 ## Reglas del negocio
 
@@ -121,6 +125,8 @@ Los permisos se validan en el servidor, no solo en el menú.
 - La mensualidad depende del tipo de vehículo (tarifas editables por el administrador).
 - Cada pago extiende el vencimiento un mes. Si el pago está vigente, el nuevo mes se suma al vencimiento.
 - Una mensualidad vencida solo genera una advertencia; no impide la entrada.
+- Una celda fuera de servicio no se ofrece en nuevas entradas; no se puede poner fuera de servicio una celda ocupada.
+- Una novedad queda asociada a la última entrada del vehículo; una novedad de salida exige que el vehículo ya haya salido.
 - Un pago anulado exige un motivo y deja de contar para el vencimiento.
 - Las sesiones expiran tras 30 minutos sin actividad.
 
